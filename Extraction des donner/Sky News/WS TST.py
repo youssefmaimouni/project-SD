@@ -1,15 +1,14 @@
 import requests
 import csv
 import time
+import os
 from datetime import datetime
 
-# List of JSON endpoints (add all your URLs here)
 JSON_ENDPOINTS = [
-    "https://api.skynewsarabia.com//rest/v2/latest.json?category=section&nextPageToken=1740116001000&pageSize=20&types=ARTICLE,IMAGE_GALLERY,LIVE_STORY",
-    "https://api.skynewsarabia.com//rest/v2/latest.json?category=section&nextPageToken=1740094515000&pageSize=20&types=ARTICLE,IMAGE_GALLERY,LIVE_STORY",
-    "https://api.skynewsarabia.com//rest/v2/latest.json?category=section&nextPageToken=1740071769000&pageSize=20&types=ARTICLE,IMAGE_GALLERY,LIVE_STORY",
-    "https://api.skynewsarabia.com//rest/v2/latest.json?category=section&nextPageToken=1740055125000&pageSize=20&types=ARTICLE,IMAGE_GALLERY,LIVE_STORY"
+    "https://api.skynewsarabia.com//rest/v2/search/text.json?deviceType=MOBILE&from=&offset=108&pageSize=12&q=%D8%AD%D9%85%D8%A7%D8%B3&showEpisodes=true&sort=RELEVANCE&supportsInfographic=true&to="
 ]
+
+FILENAME = "skynews_articles.csv"
 
 
 def extract_article_data(article):
@@ -37,7 +36,7 @@ def process_endpoint(url, writer):
             article_data = extract_article_data(item)
             writer.writerow(article_data)
 
-        print(f"Processed {len(data.get('contentItems', []))} articles from {url}")
+        print(f"Added {len(data.get('contentItems', []))} articles from {url}")
         return True
 
     except Exception as e:
@@ -46,21 +45,27 @@ def process_endpoint(url, writer):
 
 
 def main():
-    with open("skynews_articles.csv", "w", newline="", encoding="utf-8") as csvfile:
-        fieldnames = ["source", "title", "description", "url", "image_url", "published_at", "tags"]
+    # Check if file exists to determine write mode
+    file_exists = os.path.isfile(FILENAME)
+
+    with open(FILENAME, 'a', newline='', encoding='utf-8') as csvfile:
+        fieldnames = ["source", "title", "description", "url", "image_url",
+                      "published_at", "tags"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
+
+        # Write header only if file is empty/new
+        if not file_exists or csvfile.tell() == 0:
+            writer.writeheader()
 
         for idx, url in enumerate(JSON_ENDPOINTS, 1):
             print(f"Processing URL {idx}/{len(JSON_ENDPOINTS)}")
             success = process_endpoint(url, writer)
 
-            # Add delay after every 5 requests
+            # Add safety delays
             if idx % 5 == 0 and success:
                 print("Waiting 30 seconds to avoid blocking...")
                 time.sleep(30)
 
-            # Small delay between requests
             time.sleep(2)
 
 
