@@ -5,7 +5,8 @@ import os
 from datetime import datetime
 
 JSON_ENDPOINTS = [
-   ]
+    "https://api.skynewsarabia.com//rest/v2/search/text.json?deviceType=MOBILE&from=&offset=108&pageSize=12&q=%D8%AD%D9%85%D8%A7%D8%B3&showEpisodes=true&sort=RELEVANCE&supportsInfographic=true&to="
+]
 
 FILENAME = "skynews_articles.csv"
 
@@ -60,6 +61,10 @@ def main():
             print(f"Processing URL {idx}/{len(JSON_ENDPOINTS)}")
             success = process_endpoint(url, writer)
 
+            # Add safety delays
+            if idx % 5 == 0 and success:
+                print("Waiting 30 seconds to avoid blocking...")
+                time.sleep(30)
 
             time.sleep(2)
 
